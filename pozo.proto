@@ -6,6 +6,7 @@ message Monto {
     int32 CantidadTotal = 1;
 }
 
+
 service PozoService {
     rpc GetMonto(Monto) returns (Monto){}
 }
