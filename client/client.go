@@ -3,10 +3,9 @@ package main
 import (
 	"log"
 
+	"example.com/m/chat/github.com/Benja-99/tarea1_SD/chat"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
-
-	"github.com/Benja-99/tarea1_SD/chat"
 )
 
 func main() {

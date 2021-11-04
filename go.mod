@@ -1,4 +1,4 @@
-module github.com/Benja-99/tarea1_SD
+module example.com/m
 
 go 1.16
 
