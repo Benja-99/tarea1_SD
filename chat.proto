@@ -6,10 +6,13 @@ message Message {
     string body = 1;
     int32 peticion = 2;
     int32 jugada = 3;
+    int32 monto = 4;
 }
 
 service ChatService {
     rpc SayHello(Message) returns (Message){}
     rpc Peticion(Message) returns (Message) {}
     rpc Jugada(Message) returns (Message) {}
+    rpc EsperarPeticion(Message) returns (Message) {}
+    rpc PedirMonto (Message) returns (Message) {}
 }

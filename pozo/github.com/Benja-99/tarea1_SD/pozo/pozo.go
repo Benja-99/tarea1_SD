@@ -7,9 +7,11 @@ import (
 )
 
 type Server struct {
+	monto int32
 }
 
 func (s *Server) GetMonto(ctx context.Context, in *Monto) (*Monto, error) {
 	log.Printf("Peticion del cliente para obtener monto")
-	return &Monto{CantidadTotal: 10000}, nil
+	s.monto = 100000
+	return &Monto{CantidadTotal: s.monto}, nil
 }
