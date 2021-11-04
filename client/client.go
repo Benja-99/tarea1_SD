@@ -3,12 +3,20 @@ package main
 import (
 	"fmt"
 	"log"
+	"math/rand"
+	"time"
 
 	"example.com/m/chat/github.com/Benja-99/tarea1_SD/chat"
 	"example.com/m/pozo/github.com/Benja-99/tarea1_SD/pozo"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
+
+func etapa1_bot() int {
+	rand.Seed(time.Now().UnixNano())
+	resp := rand.Intn(9) + 1
+	return resp
+}
 
 func client_bot(conn *grpc.ClientConn) {
 	c := chat.NewChatServiceClient(conn)
@@ -27,7 +35,14 @@ func client_bot(conn *grpc.ClientConn) {
 			log.Fatalf("Error when calling Peticion: %s", err)
 		}
 		log.Printf("Response from server: %d", response.CantidadTotal)
+
+		fmt.Println("Primera etapa")
+		for i := 1; i <= 4; i++ {
+
+		}
+
 	}
+
 }
 
 func main() {
