@@ -2,6 +2,8 @@ package chat
 
 import (
 	"log"
+	"math/rand"
+	"time"
 
 	"golang.org/x/net/context"
 )
@@ -21,6 +23,24 @@ func (s *Server) Peticion(ctx context.Context, in *Message) (*Message, error) {
 
 func (s *Server) Jugada(ctx context.Context, in *Message) (*Message, error) {
 	log.Printf("Broadcasting new message from a client: %d", in.Jugada)
+	rand.Seed(time.Now().UnixNano())
+	resp := int32(rand.Intn(4) + 6)
+	if in.Jugada >= resp {
+		return &Message{Body: "Cagaste"}, nil
+	} else {
+		return &Message{Body: "Ronda pasada"}, nil
+	}
 
-	return &Message{Body: "Jugada registrada"}, nil
+}
+
+func (s *Server) Jugada_2(ctx context.Context, in *Message) (*Message, error) {
+	log.Printf("Broadcasting new message from a client: %d", in.Jugada)
+	rand.Seed(time.Now().UnixNano())
+	resp := int32(rand.Intn(4) + 6)
+	if in.Jugada >= resp {
+		return &Message{Body: "Cagaste"}, nil
+	} else {
+		return &Message{Body: "Ronda pasada"}, nil
+	}
+
 }
