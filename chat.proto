@@ -4,9 +4,11 @@ option go_package = "github.com/Benja-99/tarea1_SD/chat";
 
 message Message {
     string body = 1;
+    int32 peticion = 2;
 }
 
 service ChatService {
     rpc SayHello(Message) returns (Message){}
-    rpc Peticion(Message) returns (Message){}
+    rpc Peticion(Message) returns (Message) {}
+    rpc Jugada(Message) returns (Message) {}
 }
