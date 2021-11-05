@@ -4,9 +4,11 @@ option go_package = "github.com/Benja-99/tarea1_SD/pozo";
 
 message Monto {
     int32 CantidadTotal = 1;
+    int32 monto2 = 2;
 }
 
 
 service PozoService {
-    rpc GetMonto(Monto) returns (Monto){}
+    rpc GetMonto(Monto) returns (Monto) {}
+    rpc SetMonto(Monto) returns (Monto) {}
 }

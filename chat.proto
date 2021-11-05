@@ -2,12 +2,23 @@ syntax = "proto3";
 package chat;
 option go_package = "github.com/Benja-99/tarea1_SD/chat";
 
+
+
 message Message {
     string body = 1;
     int32 peticion = 2;
     int32 jugada = 3;
     int32 monto = 4;
+    bool aux = 5;
+    int32 jugador= 6;
+    int32 ronda = 7;
+    int32 num_juego = 8;
+    int32 num_ronda = 9;
+    int32 sum_juego = 10;
+    repeated int32 jugadores = 11;
+    repeated int32 jugadas = 12;
 }
+
 
 service ChatService {
     rpc SayHello(Message) returns (Message){}
@@ -15,4 +26,18 @@ service ChatService {
     rpc Jugada(Message) returns (Message) {}
     rpc EsperarPeticion(Message) returns (Message) {}
     rpc PedirMonto (Message) returns (Message) {}
+    rpc IniciarJuego (Message) returns (Message) {}
+    rpc Verificar(Message) returns (Message) {}
+    rpc IniciarXJuego (Message) returns (Message) {}
+    rpc IniciarRonda (Message) returns (Message) {}
+    rpc TerminarRonda (Message) returns (Message) {}
+    rpc Muerto (Message) returns (Message) {}
+    rpc EsperarPeticionPozo (Message) returns (Message) {}
+    rpc PedirMontoPozo (Message) returns (Message) {}
+    rpc Entregar (Message) returns (Message) {}
+    rpc EntregarLider (Message) returns (Message) {}
+    rpc SacarMuerto (Message) returns (Message) {}
+    rpc VerificarRonda (Message) returns (Message) {}
+    rpc EsperandoRegistro (Message) returns (Message) {}
+    rpc DandoRegistro (Message) returns (Message) {}
 }

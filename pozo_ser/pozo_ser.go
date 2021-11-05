@@ -3,42 +3,55 @@ package main
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"strconv"
+	"time"
 
 	"example.com/m/chat/github.com/Benja-99/tarea1_SD/chat"
-	"example.com/m/pozo/github.com/Benja-99/tarea1_SD/pozo"
 	"github.com/streadway/amqp"
 	"google.golang.org/grpc"
 )
 
-func pozo1(conn *grpc.ClientConn) {
+func pozo1(conn *grpc.ClientConn, mont int) {
 
 	c := chat.NewChatServiceClient(conn)
-	c_pozo := pozo.NewPozoServiceClient(conn)
-
-	var response *pozo.Monto
+	var response *chat.Message
 	var err error
-	response, err = c_pozo.GetMonto(context.Background(), &pozo.Monto{CantidadTotal: 1})
-	if err != nil {
-		log.Fatalf("Error when calling Peticion: %s", err)
-	}
-	log.Printf("Response from server: %d", response.CantidadTotal)
-
-	var response1 *chat.Message
-	var err1 error
-	response1, err1 = c.EsperarPeticion(context.Background(), &chat.Message{Monto: int32(response.CantidadTotal)})
-	if err1 != nil {
-		log.Fatalf("Error when calling Peticion: %s", err)
-	}
-	if response1.Body == "Pidiendo monto" {
-		var response2 *chat.Message
-		var err2 error
-		response2, err2 = c.EsperarPeticion(context.Background(), &chat.Message{Monto: int32(response.CantidadTotal)})
-		if err2 != nil {
+	var flag bool = true
+	for flag {
+		response, err = c.EsperarPeticionPozo(context.Background(), &chat.Message{Monto: int32(mont)})
+		if err != nil {
 			log.Fatalf("Error when calling Peticion: %s", err)
 		}
-		log.Printf("Response from server: %s", response2.Body)
+		if response.Monto != int32(mont) {
+			flag = false
+		}
+		time.Sleep(3 * time.Second)
+	}
+	log.Printf("Monto entregado")
+}
+
+func muerto(conn *grpc.ClientConn, mont int) {
+	c := chat.NewChatServiceClient(conn)
+	var response *chat.Message
+	var err error
+	var flag bool = true
+	for flag {
+		response, err = c.SacarMuerto(context.Background(), &chat.Message{Body: "Esperando muertos"})
+		if err != nil {
+			log.Fatalf("Error when calling Peticion: %s", err)
+		}
+		if response.Body == "Lo encontramos muerto" {
+			flag = false
+		}
+		time.Sleep(3 * time.Second)
+	}
+	a := "Jugador_" + string(response.Jugador) + " Ronda_" + string(response.Ronda) + " " + strconv.Itoa(mont)
+	b := []byte(a)
+	err1 := ioutil.WriteFile("pozo.txt", b, 0644)
+	if err1 != nil {
+		log.Fatal(err1)
 	}
 
 }
@@ -96,8 +109,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	forever := make(chan bool)
-
 	go func() {
 		for d := range msgs {
 			intVar, err := strconv.Atoi(string(d.Body))
@@ -109,10 +120,11 @@ func main() {
 		}
 	}()
 
-	log.Printf(" [*] Waiting for messages. To exit press CTRL+C")
-	<-forever
-
-	go pozo1(conn)
-
+	for i := 0; i < 4; i++ {
+		go pozo1(conn, monto)
+	}
+	for i := 0; i < 16; i++ {
+		go muerto(conn, monto)
+	}
 	fmt.Scanln()
 }

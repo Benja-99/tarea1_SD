@@ -12,6 +12,11 @@ type Server struct {
 
 func (s *Server) GetMonto(ctx context.Context, in *Monto) (*Monto, error) {
 	log.Printf("Peticion del cliente para obtener monto")
-	s.monto = 100000
+	return &Monto{CantidadTotal: s.monto}, nil
+}
+
+func (s *Server) SetMonto(ctx context.Context, in *Monto) (*Monto, error) {
+	log.Printf("Peticion del cliente para obtener monto")
+	s.monto = in.Monto2
 	return &Monto{CantidadTotal: s.monto}, nil
 }
