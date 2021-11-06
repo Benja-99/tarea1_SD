@@ -392,7 +392,7 @@ func failOnError(err error, msg string) {
 
 func (s *Server) Muerto(ctx context.Context, in *Message) (*Message, error) {
 
-	conn, err := amqp.Dial("amqp://guest:guest@172.17.0.1:5672/")
+	conn, err := amqp.Dial("amqp://guest:guest@10.6.40.185:5672/")
 
 	failOnError(err, "Failed to connect to RabbitMQ")
 

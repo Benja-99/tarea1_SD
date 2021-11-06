@@ -68,7 +68,7 @@ func main() {
 	var monto int = 0
 
 	log.Printf("El pozo se esta ejecutando")
-	conn1, err1 := amqp.Dial("amqp://guest:guest@172.17.0.1:5672/")
+	conn1, err1 := amqp.Dial("amqp://guest:guest@10.6.40.185:5672/")
 
 	if err1 != nil {
 		log.Fatal(err1)
