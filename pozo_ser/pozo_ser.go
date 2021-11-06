@@ -45,7 +45,7 @@ func muerto(conn *grpc.ClientConn, mont int) {
 		if response.Body == "Lo encontramos muerto" {
 			flag = false
 		}
-		time.Sleep(3 * time.Second)
+		time.Sleep(10)
 	}
 	a := "Jugador_" + string(response.Jugador) + " Ronda_" + string(response.Ronda) + " " + strconv.Itoa(mont)
 	b := []byte(a)
@@ -67,6 +67,7 @@ func main() {
 
 	var monto int = 0
 
+	log.Printf("El pozo se esta ejecutando")
 	conn1, err1 := amqp.Dial("amqp://guest:guest@localhost:5672/")
 
 	if err1 != nil {

@@ -1,6 +1,7 @@
 package chat
 
 import (
+	"fmt"
 	"log"
 	"math"
 	"math/rand"
@@ -20,11 +21,12 @@ type Server struct {
 	inicio_juego         bool
 	array_jugadas1       [16]int
 	array_jugadas1_comp  [16]int
-	num_lider_1          int
+	array_num_lider_1    [4]int
 	array_jugadas_enviar [4]int32
+	arraySumaJugadas     [16]int32
 
 	juegos_iniciados [3]bool
-	ronda_iniciada   bool
+	ronda_iniciada   [4]bool
 	jugador_pidiendo int
 	lider_pidiendo   int
 	muerto           int32
@@ -33,15 +35,16 @@ type Server struct {
 	jugadores [16]int32
 
 	// variables juego 2
-	equipo1          [8]int32
-	equipo2          [8]int32
-	jugados_equipo2  [8]int32
-	jugados_equipo1  [8]int32
-	suma_equipo1     int32
-	suma_equipo2     int32
-	largo_equipo     int32
-	num_lider_juego2 int32
-	asesinado        int32
+	equipo1               [8]int32
+	equipo2               [8]int32
+	jugados_equipo2       [8]int32
+	jugados_equipo1       [8]int32
+	suma_equipo1          int32
+	suma_equipo2          int32
+	largo_equipo          int32
+	num_lider_juego2      [100]int32
+	asesinado             int32
+	ronda_iniciada_juego2 [100]bool
 
 	registro     int
 	jugador_name int32
@@ -66,14 +69,23 @@ func (s *Server) SayHello(ctx context.Context, in *Message) (*Message, error) {
 func (s *Server) IniciarJuego(ctx context.Context, in *Message) (*Message, error) {
 	if in.Body == "Iniciar" {
 		s.inicio_juego = true
-
 	}
 	return &Message{Body: "Se inicio el juego"}, nil
 }
 
 func (s *Server) IniciarXJuego(ctx context.Context, in *Message) (*Message, error) {
 	s.juegos_iniciados[in.NumJuego-1] = true
-	if in.NumJuego == 2 {
+	if in.NumJuego == 1 {
+		for i := 0; i < 4; i++ {
+			s.array_num_lider_1[i] = rand.Intn(4) + 6
+			s.ronda_iniciada[i] = false
+		}
+
+	} else if in.NumJuego == 2 {
+		for i := 0; i < 100; i++ {
+			s.ronda_iniciada_juego2[i] = false
+			s.num_lider_juego2[i] = int32(rand.Intn(3) + 1)
+		}
 		vivos := 0
 		for i := 0; i < 16; i++ {
 			if s.array_jugador[i] == 1 {
@@ -145,17 +157,12 @@ func (s *Server) IniciarXJuego(ctx context.Context, in *Message) (*Message, erro
 }
 
 func (s *Server) IniciarRonda(ctx context.Context, in *Message) (*Message, error) {
-	s.ronda_iniciada = true
-	if in.NumJuego == 1 {
-		s.num_lider_1 = rand.Intn(4) + 6
-	} else if in.NumJuego == 2 {
-		s.num_lider_juego2 = int32(rand.Intn(3) + 1)
-	}
-	return &Message{Body: "Se inicio la ronda"}, nil
+	s.ronda_iniciada[in.NumRonda] = true
+	return &Message{Body: "Se inicio la ronda", Jugada: int32(s.array_num_lider_1[in.NumRonda])}, nil
 }
 
 func (s *Server) TerminarRonda(ctx context.Context, in *Message) (*Message, error) {
-	s.ronda_iniciada = false
+	s.ronda_iniciada[in.NumRonda] = false
 	return &Message{Body: "Se termino la ronda", Jugadores: s.array_jugador[:], Jugadas: s.array_jugadas_enviar[:]}, nil
 }
 
@@ -182,7 +189,7 @@ func (s *Server) Peticion(ctx context.Context, in *Message) (*Message, error) {
 func (s *Server) VerificarRonda(ctx context.Context, in *Message) (*Message, error) {
 	if in.NumJuego == 1 {
 		for i := 0; i < 16; i++ {
-			log.Printf("Procesando la respuesta del jugador %d: %d - %d", i+1, s.array_jugadas1_comp[i], in.NumRonda+1)
+			log.Printf("Procesando la respuesta del jugador %d: %d - %d (%d)", i+1, s.array_jugadas1_comp[i], in.NumRonda+1, in.Monto)
 			if s.array_jugador[i] == 1 && s.array_jugadas1_comp[i] != int(in.NumRonda+1) {
 				log.Printf("Falta que el jugador %d escoga su numero", i+1)
 				return &Message{Aux: true}, nil
@@ -195,7 +202,7 @@ func (s *Server) VerificarRonda(ctx context.Context, in *Message) (*Message, err
 				return &Message{Aux: false}, nil
 			}
 		}
-		paridad_lider := s.num_lider_juego2 % 2
+		paridad_lider := s.num_lider_juego2[rand.Intn(98)+1] % 2
 		paridad_equipo1 := s.suma_equipo1 % 2
 		paridad_equipo2 := s.suma_equipo2 % 2
 		if paridad_lider == paridad_equipo1 && paridad_lider != paridad_equipo2 {
@@ -288,74 +295,81 @@ func (s *Server) VerificarRonda(ctx context.Context, in *Message) (*Message, err
 }
 
 func (s *Server) Jugada(ctx context.Context, in *Message) (*Message, error) {
-	if in.NumJuego == 1 {
-		if s.juegos_iniciados[in.NumJuego-1] && s.ronda_iniciada {
-			if in.Jugada >= int32(s.num_lider_1) {
-				s.array_jugadas1_comp[in.Jugador-1] = s.array_jugadas1_comp[in.Jugador-1] + 1
-				s.array_jugador[in.Jugador-1] = 0
-				return &Message{Body: "Cagaste", Aux: true, NumRonda: int32(s.array_jugadas1_comp[in.Jugador-1])}, nil
+	if s.array_jugador[in.Jugador-1] == 1 {
+		if in.NumJuego == 1 {
+			if s.juegos_iniciados[in.NumJuego-1] && s.ronda_iniciada[in.NumRonda] {
+				fmt.Println("ENTRO: ", in.Jugador)
+				if in.Jugada >= int32(s.array_num_lider_1[in.NumRonda]) {
+					s.array_jugadas1_comp[in.Jugador-1] = s.array_jugadas1_comp[in.Jugador-1] + 1
+					s.array_jugador[in.Jugador-1] = 0
+					return &Message{Body: "Cagaste", Aux: true, NumRonda: int32(s.array_jugadas1_comp[in.Jugador-1])}, nil
+				} else {
+					s.array_jugadas1[in.Jugador-1] = s.array_jugadas1[in.Jugador-1] + int(in.Jugada)
+					s.array_jugadas1_comp[in.Jugador-1]++
+					if s.array_jugadas1_comp[in.Jugador-1] == 4 {
+						if s.array_jugadas1[in.Jugador-1] < 21 {
+							s.array_jugador[in.Jugador-1] = 0
+							return &Message{Body: "Cagaste", Aux: true, NumRonda: int32(s.array_jugadas1_comp[in.Jugador-1])}, nil
+						}
+					} else {
+						return &Message{Body: "Ronda pasada", Aux: true, SumJuego: int32(s.array_jugadas1[in.Jugador-1]), Jugadores: s.array_jugador[:]}, nil
+					}
+
+				}
 			} else {
-				s.array_jugadas1[in.Jugador-1] = s.array_jugadas1[in.Jugador-1] + int(in.Jugada)
-				s.array_jugadas1_comp[in.Jugador-1]++
-				if s.array_jugadas1_comp[in.Jugador-1] == 3 {
-					if s.array_jugadas1_comp[in.Jugador-1] < 21 {
-						s.array_jugador[in.Jugador-1] = 0
-						return &Message{Body: "Cagaste", Aux: true, NumRonda: int32(s.array_jugadas1_comp[in.Jugador-1])}, nil
-					}
+				return &Message{Aux: false}, nil
+			}
+		} else if in.NumJuego == 2 {
+			if s.juegos_iniciados[1] && s.ronda_iniciada_juego2[in.NumRonda] {
+				if in.Jugador == s.asesinado {
+					s.array_jugador[in.Jugador-1] = 0
+					return &Message{Body: "Cagaste", Aux: true, NumJuego: 2}, nil
 				}
-				return &Message{Body: "Ronda pasada", Aux: true, SumJuego: int32(s.array_jugadas1[in.Jugador-1])}, nil
-			}
-		} else {
-			return &Message{Aux: false}, nil
-		}
-	} else if in.NumJuego == 2 {
-		if s.juegos_iniciados[1] && s.ronda_iniciada {
-			if in.Jugador == s.asesinado {
-				return &Message{Body: "Cagaste", Aux: true, NumJuego: 2}, nil
-			}
-			flagJugada := true
-			for flagJugada {
-				for i := 0; i < 8; i++ {
-					if s.equipo1[i] == in.Jugador {
-						s.suma_equipo1 = s.suma_equipo1 + in.Jugada
-						s.jugados_equipo1[i] = 1
-						flagJugada = false
-						break
-					} else if s.equipo2[i] == in.Jugador {
-						s.suma_equipo2 = s.suma_equipo2 + in.Jugada
-						s.jugados_equipo2[i] = 1
-						flagJugada = false
-						break
+				flagJugada := true
+				for flagJugada {
+					for i := 0; i < 8; i++ {
+						if s.equipo1[i] == in.Jugador {
+							s.suma_equipo1 = s.suma_equipo1 + in.Jugada
+							s.jugados_equipo1[i] = 1
+							flagJugada = false
+							break
+						} else if s.equipo2[i] == in.Jugador {
+							s.suma_equipo2 = s.suma_equipo2 + in.Jugada
+							s.jugados_equipo2[i] = 1
+							flagJugada = false
+							break
+						}
 					}
 				}
 			}
-		}
-		return &Message{Body: "Jugada registrada exitosamente del " + strconv.Itoa(int(in.Jugador))}, nil
-	} else if in.NumJuego == 3 {
-		if s.juegos_iniciados[1] && s.ronda_iniciada {
-			if in.Jugador == s.asesinado {
-				return &Message{Body: "Cagaste", Aux: true, NumJuego: 2}, nil
-			}
-			flagJugada := true
-			for flagJugada {
-				for i := 0; i < 8; i++ {
-					if s.equipo1[i] == in.Jugador {
-						s.suma_equipo1 = s.suma_equipo1 + in.Jugada
-						s.jugados_equipo1[i] = 1
-						flagJugada = false
-						break
-					} else if s.equipo2[i] == in.Jugador {
-						s.suma_equipo2 = s.suma_equipo2 + in.Jugada
-						s.jugados_equipo2[i] = 1
-						flagJugada = false
-						break
+			return &Message{Body: "Jugada registrada exitosamente del " + strconv.Itoa(int(in.Jugador))}, nil
+		} else if in.NumJuego == 3 {
+			if s.juegos_iniciados[2] {
+				if in.Jugador == s.asesinado {
+					s.array_jugador[in.Jugador-1] = 0
+					return &Message{Body: "Cagaste", Aux: true, NumJuego: 2}, nil
+				}
+				flagJugada := true
+				for flagJugada {
+					for i := 0; i < 8; i++ {
+						if s.equipo1[i] == in.Jugador {
+							s.suma_equipo1 = s.suma_equipo1 + in.Jugada
+							s.jugados_equipo1[i] = 1
+							flagJugada = false
+							break
+						} else if s.equipo2[i] == in.Jugador {
+							s.suma_equipo2 = s.suma_equipo2 + in.Jugada
+							s.jugados_equipo2[i] = 1
+							flagJugada = false
+							break
+						}
 					}
 				}
 			}
+			return &Message{Body: "Jugada registrada exitosamente del " + strconv.Itoa(int(in.Jugador))}, nil
 		}
-		return &Message{Body: "Jugada registrada exitosamente del " + strconv.Itoa(int(in.Jugador))}, nil
 	}
-	return &Message{Body: "ultimo retorno"}, nil
+	return &Message{Body: "Los muertos no juegan"}, nil
 }
 
 func (s *Server) EsperarPeticion(ctx context.Context, in *Message) (*Message, error) {

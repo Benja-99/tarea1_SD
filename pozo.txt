@@ -1,1 +1,1 @@
-Jugador_Ϩ Ronda_Ϩ 0
+Jugador_Ϩ Ronda_Ϩ 100000000

@@ -31,6 +31,7 @@ func main() {
 		log.Fatalf("did not connect: %s", err)
 	}
 	defer conn.Close()
+	log.Printf("El namenode se esta ejecutando")
 	c := chat.NewChatServiceClient(conn)
 	var flag bool = true
 	for flag {

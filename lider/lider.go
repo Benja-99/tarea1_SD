@@ -113,28 +113,43 @@ func main() {
 				entrada, _ := reader.ReadString('\n')          // Leer hasta el separador de salto de línea
 				eleccion := strings.TrimRight(entrada, "\r\n") // Remover el salto de línea de la entrada del usuario
 				if eleccion == "1" {
-					response, err = c.IniciarRonda(context.Background(), &chat.Message{Body: "Iniciar Ronda"})
+					response, err = c.IniciarRonda(context.Background(), &chat.Message{Body: "Iniciar Ronda", NumRonda: int32(i)})
 					if err != nil {
 						log.Fatalf("Error when calling IniciarRonda: %s", err)
 					}
-					fmt.Println(response.Body)
+					fmt.Println(response.Body + " - Numero elegido por el LIDER: " + strconv.Itoa(int(response.Jugada)))
 					var flag bool = true
 					for flag {
-						response, err = c.VerificarRonda(context.Background(), &chat.Message{NumJuego: 1, NumRonda: int32(i)})
+						response, err = c.VerificarRonda(context.Background(), &chat.Message{NumJuego: 1, NumRonda: int32(i), Monto: 1})
 						if err != nil {
 							log.Fatalf("Error when calling VerificarRonda: %s", err)
 						}
 						flag = response.Aux
+						time.Sleep(1 * time.Second)
 					}
 
-					response, err = c.TerminarRonda(context.Background(), &chat.Message{Body: "Terminar Ronda"})
+					response, err = c.TerminarRonda(context.Background(), &chat.Message{Body: "Terminar Ronda", NumRonda: int32(i)})
 					if err != nil {
 						log.Fatalf("Error when calling TerminarRonda: %s", err)
 					}
 					//response, err = c.DandoRegistro(context.Background(), &chat.Message{Jugador:)
 
 					fmt.Println("Jugadores: ", response.Jugadores)
-
+					SumJugadoresVivos := 0
+					NumeroGanador := 0
+					for i := 0; i < 16; i++ {
+						if response.Jugadores[i] == 1 {
+							SumJugadoresVivos++
+							NumeroGanador = i
+						}
+					}
+					if SumJugadoresVivos == 0 {
+						log.Printf("Se acabo el juego no quedan jugadores vivos")
+						return
+					} else if SumJugadoresVivos == 1 {
+						log.Printf("El ganador del juego del calamar es %d", NumeroGanador+1)
+						return
+					}
 				} else {
 					break
 				}
@@ -149,13 +164,13 @@ func main() {
 			}
 			if SumJugadoresVivos == 0 {
 				log.Printf("Se acabo el juego no quedan juagdores vivos")
-				os.Exit(1)
+				return
 			} else if SumJugadoresVivos == 1 {
 				log.Printf("El ganador del juego del calamar es %d", NumeroGanador+1)
-				os.Exit(1)
+				return
 			}
 		} else {
-			os.Exit(1)
+			return
 		}
 		pri = `Iniciar juego 2?
 			[ 1 ] SI
