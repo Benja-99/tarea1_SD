@@ -59,7 +59,7 @@ func muerto(conn *grpc.ClientConn, mont int) {
 func main() {
 
 	var conn *grpc.ClientConn
-	conn, err := grpc.Dial(":9000", grpc.WithInsecure())
+	conn, err := grpc.Dial("10.6.40.185:9000", grpc.WithInsecure())
 	if err != nil {
 		log.Fatalf("did not connect: %s", err)
 	}
@@ -68,7 +68,7 @@ func main() {
 	var monto int = 0
 
 	log.Printf("El pozo se esta ejecutando")
-	conn1, err1 := amqp.Dial("amqp://guest:guest@localhost:5672/")
+	conn1, err1 := amqp.Dial("amqp://guest:guest@172.17.0.1:5672/")
 
 	if err1 != nil {
 		log.Fatal(err1)

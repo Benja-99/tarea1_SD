@@ -1,7 +1,6 @@
 package chat
 
 import (
-	"fmt"
 	"log"
 	"math"
 	"math/rand"
@@ -23,7 +22,6 @@ type Server struct {
 	array_jugadas1_comp  [16]int
 	array_num_lider_1    [4]int
 	array_jugadas_enviar [4]int32
-	arraySumaJugadas     [16]int32
 
 	juegos_iniciados [3]bool
 	ronda_iniciada   [4]bool
@@ -189,7 +187,6 @@ func (s *Server) Peticion(ctx context.Context, in *Message) (*Message, error) {
 func (s *Server) VerificarRonda(ctx context.Context, in *Message) (*Message, error) {
 	if in.NumJuego == 1 {
 		for i := 0; i < 16; i++ {
-			log.Printf("Procesando la respuesta del jugador %d: %d - %d (%d)", i+1, s.array_jugadas1_comp[i], in.NumRonda+1, in.Monto)
 			if s.array_jugador[i] == 1 && s.array_jugadas1_comp[i] != int(in.NumRonda+1) {
 				log.Printf("Falta que el jugador %d escoga su numero", i+1)
 				return &Message{Aux: true}, nil
@@ -298,7 +295,6 @@ func (s *Server) Jugada(ctx context.Context, in *Message) (*Message, error) {
 	if s.array_jugador[in.Jugador-1] == 1 {
 		if in.NumJuego == 1 {
 			if s.juegos_iniciados[in.NumJuego-1] && s.ronda_iniciada[in.NumRonda] {
-				fmt.Println("ENTRO: ", in.Jugador)
 				if in.Jugada >= int32(s.array_num_lider_1[in.NumRonda]) {
 					s.array_jugadas1_comp[in.Jugador-1] = s.array_jugadas1_comp[in.Jugador-1] + 1
 					s.array_jugador[in.Jugador-1] = 0
@@ -396,7 +392,7 @@ func failOnError(err error, msg string) {
 
 func (s *Server) Muerto(ctx context.Context, in *Message) (*Message, error) {
 
-	conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
+	conn, err := amqp.Dial("amqp://guest:guest@172.17.0.1:5672/")
 
 	failOnError(err, "Failed to connect to RabbitMQ")
 

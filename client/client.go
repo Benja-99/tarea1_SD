@@ -52,7 +52,6 @@ func client_bot(conn *grpc.ClientConn, num_jug int) {
 	var response_jugada *chat.Message
 	for i := 0; i < 4; i++ {
 		jug = etapa1_bot()
-		log.Printf("Jugada del bot %d: %d", num_jug, jug)
 		var flag_ronda bool = true
 		for flag_ronda {
 			response_jugada, err = c.Jugada(context.Background(), &chat.Message{Jugada: jug, NumJuego: 1, NumRonda: int32(i), Jugador: int32(num_jug)})
@@ -413,7 +412,7 @@ func client_real(conn *grpc.ClientConn, num_jug int) {
 
 func main() {
 	var conn *grpc.ClientConn
-	conn, err := grpc.Dial(":9000", grpc.WithInsecure())
+	conn, err := grpc.Dial("10.6.40.185:9000", grpc.WithInsecure())
 	wg.Add(16)
 	if err != nil {
 		log.Fatalf("did not connect: %s", err)
